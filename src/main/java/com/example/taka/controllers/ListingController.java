@@ -81,9 +81,12 @@ public class ListingController {
     * GET /api/requests/{id}/replies
     * */
     @GetMapping("/{id}/replies")
-    public List<Reply> getReplies(@PathVariable Long id){
-        Request request = listingService.findById(id);
-        return request.getReplies();
+    public List<ListingDtos.ResponseToReplyDto> getReplies(@PathVariable Long id){
+        //fetch the parent Request(which loads its replies)
+        Request r = listingService.findById(id);
+
+        //map each reply ->toDto
+        return r.getReplies().stream().map(listingService::toDto).toList();
     }
 
     /*
@@ -91,10 +94,14 @@ public class ListingController {
     * POST /api/requests/{id}/replies
     * */
     @PostMapping("/{id}/replies")
-    public Reply addReply(@PathVariable Long id, @RequestBody Reply reply){
+    public ListingDtos.ResponseToReplyDto addReply(@PathVariable Long id, @RequestBody @Valid ListingDtos.CreateReplyDto dto){
         Request request = listingService.findById(id);
-        reply.setRequest(request);
-        return replyRepo.save(reply);
+        //map Dto to Reply entity (sets parent Request internally)
+        Reply toSave = listingService.fromDto(id, dto);
+        //save to db
+        Reply saved = listingService.saveReply(toSave);
+        //Map entity to Dto and return
+        return listingService.toDto(saved);
     }
 
     /**
@@ -102,10 +109,14 @@ public class ListingController {
     **/
 
     /*
-    * 1. Search Requests By title*/
+    * 1. Search Requests By title
+    * Returns a list of RequestResponseDto
+    * */
     @GetMapping("/search/title")
-    public List<Request> searchByTitle(String title){
-        return listingService.requestByTitle(title);
+    public List<ListingDtos.ResponseToRequestDto> searchByTitle(@RequestParam("title") String title){
+        //fetch matching entities
+        List<Request> matches = listingService.requestByTitle(title);
+        return matches.stream().map(listingService::toDto).toList();
     }
 
 }
