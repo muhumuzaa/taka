@@ -45,12 +45,16 @@ public class Request {
     @Size(max = 100, message = "Location cannot exceed 100 characters")
     private String location;
 
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
+    @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     private RequestStatus status = RequestStatus.OPEN;
 
+    @Builder.Default
     @OneToMany(mappedBy = "request", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<Reply> replies = new ArrayList<>();

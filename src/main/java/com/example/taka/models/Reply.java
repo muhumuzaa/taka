@@ -35,7 +35,9 @@ public class Reply {
     @Size(max=10, message = "price cant be above 10 figures")
     private BigDecimal price;
 
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
+    @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     @ManyToOne
