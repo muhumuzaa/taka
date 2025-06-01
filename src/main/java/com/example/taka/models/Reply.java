@@ -2,8 +2,7 @@ package com.example.taka.models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -31,8 +30,9 @@ public class Reply {
     @Size(max = 255, message = "Image URL must be at most 255 characters")
     private String imageUrl;
 
-    @NotBlank(message = "price is required")
-    @Size(max=10, message = "price cant be above 10 figures")
+    @NotNull(message = "price is required")
+    @DecimalMin(value="0.0", inclusive=false, message = "price must be greater than 0")
+    @Digits(integer=6, fraction =1, message ="Price must be a valid monetary amount")
     private BigDecimal price;
 
     @Builder.Default
