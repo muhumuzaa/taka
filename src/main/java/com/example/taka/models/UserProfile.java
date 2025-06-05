@@ -42,16 +42,13 @@ public class UserProfile {
     private String passwordHarsh;
 
     @Size(max=250)
-    @Column(length =250)
     private String bio;
 
     @Size(max=255, message="Profile image url cant exceed 250 characters")
-    @Column(length =255)
     private String profileImage;
 
     @Pattern(regexp = "^[0-9 ()+-]*$", message = "Phone number contains invalid characters")
-    @Size(max=200)
-    @Column(length =20)
+    @Size(max=20)
     private String phoneNumber;
 
     @Column(nullable =false)
