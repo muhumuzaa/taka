@@ -19,67 +19,55 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class UserProfileController {
     private final UserProfileService userProfService;
-    private final PasswordEncoder passwordEncoder;
 
+    //Get all users
+    @GetMapping
+    public Page<UserProfileDtos.UserProfileResponseDto> getAllUser(Pageable pageable){
+        return userProfService.findAll(pageable).map(userProfService::toDto);
+    }
+
+    //Get user by id
+    @GetMapping("/{id}")
+    public UserProfileDtos.UserProfileResponseDto findById(@PathVariable Long id){
+        UserProfile userProf = userProfService.findById(id);
+        return userProfService.toDto(userProf);
+    }
+
+    //create user
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserProfileDtos.UserProfileResponseDto createUser(@Valid @RequestBody UserProfileDtos.CreateUserProfileDto dto){
 
+        //first convert created dto into entity
+        UserProfile toSave = userProfService.fromDto(dto);
 
-        UserProfile entity = new UserProfile();
+        //save the entity
+        UserProfile savedEntity = userProfService.createUser(toSave);
 
-        //map Dto to Entity
-        entity.setFName(dto.fName());
-        entity.setLName(dto.lName());
-        entity.setEmail(dto.email().trim().toLowerCase());
-        entity.setPasswordHarsh(passwordEncoder.encode(dto.password()));
-        entity.setBio(dto.bio());
-        entity.setProfileImage(dto.profileImage());
-        entity.setPhoneNumber(dto.phoneNumber());
-        //other defaults from UserProfile entity automatically set
-
-        UserProfile newProf = userProfService.createUser(entity);
-
-        //return the response. Map Entity to Dto
-        return new UserProfileDtos.UserProfileResponseDto(
-                newProf.getId(),
-                newProf.getFName(),
-                newProf.getLName(),
-                newProf.getEmail(),
-                newProf.getBio(),
-                newProf.getProfileImage(),
-                newProf.getPhoneNumber(),
-                newProf.isEnabled(),
-                newProf.getCreatedAt(),
-                newProf.getUpdatedAt(),
-                newProf.getUser_role().name()
-        );
+        //convert entity back to dto and return to client
+        return userProfService.toDto(savedEntity);
     }
 
-    @GetMapping("/{id}")
-    public UserProfileDtos.UserProfileResponseDto getUserById(@PathVariable Long id){
-        //entity to Dto mapping
-        UserProfile user = userProfService.findById(id);
+    @PutMapping("/{id}")
+    public UserProfileDtos.UserProfileResponseDto updateUser(@PathVariable @RequestBody Long id, UserProfileDtos.CreateUserProfileDto dto){
+        //Convert the client Dto to entity
+        UserProfile userToUpdate = userProfService.fromDto(dto);
 
-        return new UserProfileDtos.UserProfileResponseDto(
-                user.getId(),
-                user.getFName(),
-                user.getLName(),
-                user.getEmail(),
-                user.getBio(),
-                user.getProfileImage(),
-                user.getPhoneNumber(),
-                user.isEnabled(),
-                user.getCreatedAt(),
-                user.getUpdatedAt(),
-                user.getUser_role().name()
+        //copy id into new entity so JPA will update
+        userToUpdate.setId(id);
 
-                );
+        //update
+        UserProfile updated = userProfService.update(id, userToUpdate);
+
+        //return the Dto to client
+        return userProfService.toDto(updated);
     }
 
-    @GetMapping
-    public Page<UserProfileDtos.UserProfileResponseDto> getAllUser(Pageable pageable){
-        return userProfService.findAll(pageable).map();
+    @DeleteMapping("/{id}")
+    public void deleteUser(@PathVariable Long id){
+        userProfService.delete(id);
     }
+
+
 
 }
