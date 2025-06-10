@@ -29,9 +29,9 @@ public class Request {
     @Size(max = 500, message = "Description cannot exceed 500 characters")
     private String description;
 
-    @NotBlank(message = "Requester name cannot be empty")
-    @Size(max = 100, message = "Requester name cannot exceed 100 characters")
-    private String requesterName;
+    @ManyToOne(fetch =FetchType.LAZY)
+    @JoinColumn(name="owner_id", nullable =false)
+    private UserProfile owner;
 
     @Size(max = 255, message = "Image URL cannot exceed 255 characters")
     private String imageUrl;
@@ -54,8 +54,11 @@ public class Request {
     @Enumerated(EnumType.STRING)
     private RequestStatus status = RequestStatus.OPEN;
 
+    @Enumerated(EnumType.STRING)
+    private ContentStatus contentStatus = ContentStatus.ALLOWED;
+
     @Builder.Default
-    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, orphanRemoval=true)
     @JsonManagedReference
     private List<Reply> replies = new ArrayList<>();
 }

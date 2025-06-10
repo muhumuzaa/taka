@@ -4,11 +4,14 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
@@ -25,49 +28,45 @@ public class JwtUtil {
 
     @PostConstruct
     public void init(){
-        this.signingKey = Keys.hmacShaKeyFor(secretKey.getBytes());
+        this.signingKey = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    //generate jwt given username
+
+    //generate jwt token given email
     public String generateToken(String email){
-        Date now = new Date();
+        Date now = new Date(); //Issued at
         Date expiry = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(now)
-                .setExpiration(expiry)
+                .subject(email)
+                .issuedAt(now)
+                .expiration(expiry)
                 .signWith(signingKey)
                 .compact();
     }
 
     //extract email (subject) from a token
     public String ExtractEmail(String token){
-        return parseClaims(token).getSubject();
+        return extractAllClaims(token).getSubject();
     }
 
     //check if token is not expired
     public boolean isTokenExpired(String token){
-        Date expiration = parseClaims(token).getExpiration();
-        return expiration.before(new Date());
+        return extractAllClaims(token).getExpiration().before(new Date());
     }
 
     //validate token -> signature + expiration
-    public boolean validateToken(String token){
+    public boolean validateToken(String token, String userEmail){
         try{
-            parseClaims(token);
-            return true;
+            String email = ExtractEmail(token);
+            return (email.equals(userEmail) && !isTokenExpired(token));
         }catch(JwtException | IllegalArgumentException e){
             return false;
         }
     }
 
-    //internal helper to parse claims
-    private Claims parseClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(signingKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+    public Claims extractAllClaims(String token){
+        return Jwts.parser().verifyWith((SecretKey) signingKey).build().parseSignedClaims(token).getPayload();
     }
+
 }

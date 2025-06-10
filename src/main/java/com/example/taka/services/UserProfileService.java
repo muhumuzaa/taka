@@ -27,6 +27,10 @@ public class UserProfileService {
         return userProfileRepo.findById(id).orElseThrow(() -> new RuntimeException("User "+ id +" not found "));
     }
 
+    public UserProfile findByEmail(String email){
+        return userProfileRepo.findByEmail(email).orElseThrow(()->new RuntimeException("User with email: "+email +" not found"));
+    }
+
     public List<UserProfile> finderByfNameOrlName(String fName, String lName){
         return userProfileRepo.findByFNameContainingIgnoreCaseOrLNameContainingIgnoreCase(fName, lName);
     }

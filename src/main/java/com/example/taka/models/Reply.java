@@ -19,9 +19,9 @@ public class Reply {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Name is required")
-    @Size(max = 100, message = "Name must be at most 100 characters")
-    private String responderName;
+    @ManyToOne(fetch =FetchType.LAZY)
+    @JoinColumn(name ="replier_id", nullable = false)
+    private UserProfile replier;
 
     @NotBlank(message = "message is required")
     @Size(max = 500, message = "message must be at most 500 characters")
@@ -40,8 +40,11 @@ public class Reply {
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    @ManyToOne
-    @JoinColumn(name = "request_id")
+    @Enumerated(EnumType.STRING)
+    private ContentStatus contentStatus = ContentStatus.ALLOWED;
+
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name = "request_id", nullable =false)
     @JsonBackReference
     private Request request;
 }

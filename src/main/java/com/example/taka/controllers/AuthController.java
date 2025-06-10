@@ -7,6 +7,7 @@ import com.example.taka.repos.UserProfileRepository;
 import com.example.taka.security.JwtUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -33,15 +34,14 @@ public class AuthController {
     public ResponseEntity<AuthDto.AuthResponse> login(@Valid @RequestBody AuthDto.AuthRequest request){
 
         //authenticate user using authenitcationManager
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPasswowrd());
         try{
-            authManager.authenticate(authToken);
-        }catch(BadCredentialsException e){
-            return ResponseEntity.status(401).build();
+            authManager.authenticate( new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+        }catch(BadCredentialsException ex){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         //if authentication succeeds, generate JWT
-        String token = jwtUtil.generateToken(request.getEmail());
+        String token = jwtUtil.generateToken(request.email());
 
         return ResponseEntity.ok(new AuthDto.AuthResponse(token));
     }
@@ -50,8 +50,9 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody AuthDto.AuthRequest request){
 
+
         //check if user already exists
-        if(userRepo.findByEmail(request.getEmail().toLowerCase()).isPresent()){
+        if(userRepo.findByEmail(request.email().toLowerCase()).isPresent()){
             return ResponseEntity.status(409).body("Email is already in use");
         }
 
@@ -59,12 +60,12 @@ public class AuthController {
         UserProfile newUser = UserProfile.builder()
                 .fName("default")
                 .lName("default")
-                .email(request.getEmail().trim().toLowerCase())
+                .email(request.email().trim().toLowerCase())
                 .user_role(UserRole.USER)
                 .enabled(false)
                 .build();
 
         userRepo.save(newUser);
-        return ResponseEntity.status(201).body("Account registered successfully");
+        return ResponseEntity.status(HttpStatus.CREATED).body("Account registered successfully");
     }
 }
