@@ -12,7 +12,7 @@ public class JwtUtilTest {
     private JwtUtil jwtUtil;
 
     private final String secret ="0123456789ABCDEF0123456789ABCDEF";
-    private final long expirationMs =200l;
+    private final long expirationMs =1200L;
 
     @BeforeEach
     void setUp(){

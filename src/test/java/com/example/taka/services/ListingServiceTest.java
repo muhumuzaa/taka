@@ -105,9 +105,7 @@ public class ListingServiceTest {
         // Configure the mock requestRepo to return the dummyPage when findAll is called with the specified pageable.
         when(requestRepo.findAll(pageable)).thenReturn(dummyPage);
 
-
         Page<ListingDtos.ResponseToRequestDto> result = listingService.findAllRequests(pageable);
-
 
         assertThat(result.getTotalElements()).isEqualTo(1);
 

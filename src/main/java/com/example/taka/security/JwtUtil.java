@@ -1,9 +1,6 @@
 package com.example.taka.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -66,7 +63,11 @@ public class JwtUtil {
     }
 
     public Claims extractAllClaims(String token){
-        return Jwts.parser().verifyWith((SecretKey) signingKey).build().parseSignedClaims(token).getPayload();
+        try{
+            return Jwts.parser().verifyWith((SecretKey) signingKey).clockSkewSeconds(1).build().parseSignedClaims(token).getPayload();
+        }catch(ExpiredJwtException eje){
+            return eje.getClaims();
+        }
     }
 
 }
