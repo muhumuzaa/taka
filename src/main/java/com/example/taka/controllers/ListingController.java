@@ -55,14 +55,13 @@ public class ListingController {
         //first look up authenticated user
         UserProfile owner = userProfService.findByEmail(principal.getName());
 
-        //Dto -> Entity
+        //convert Dto -> Entity
         Request request = listingService.fromRequestDto(dto, owner);
-        toSave.requesterName(userProf);
 
         //save entity
-        Request saved = listingService.save(toSave);
+        Request saved = listingService.saveRequest(request);
         //back to Dto and return
-        return listingService.toDto(saved);
+        return listingService.toRequestDto(saved);
     }
 
     /* 4. PUT  -> Update Request*/
@@ -70,32 +69,32 @@ public class ListingController {
     public ListingDtos.ResponseToRequestDto updateRequest(@PathVariable Long id, @RequestBody @Valid ListingDtos.CreateRequestDto dto, Principal principal){
 
         //find Request
-        Request existing = listingService.findById(id);
+        Request existing = listingService.findRequestById(id);
 
-        UserProfile userProf = userProfService.findByEmail(principal.getName());
+        UserProfile owner = userProfService.findByEmail(principal.getName());
 
-        //Only owner or ADMIN can update
-        if(!existing.getOwner().getEmail().equals(userProf.getName())){
+        //Only owner can update
+        if(!existing.getOwner().getEmail().equals(owner.getEmail())){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorize to make this update");
         }
 
-        //copy id into new entity so update used correct row
-        existing.setId(id);
         //save entity
-        Request saved = listingService.updateRequest(id, dto);
+        Request updated = listingService.updateRequest(id, dto);
         //return Dto of the updated row
-        return listingService.toDto(saved);
+        return listingService.toRequestDto(updated);
     }
 
     /* 5. Delete  -> Delete Request*/
     @DeleteMapping("/{id}")
     public void deleteRequest(@PathVariable Long id, Principal principal){
 
-        Request existing = listingService.findById(id);
+        Request existing = listingService.findRequestById(id);
 
-        UserProfile userProf = userProfService.findByEmail(principal.getName());
+        UserProfile owner = userProfService.findByEmail(principal.getName());
 
-        if(!existing.getOwner().getEmail().equals(userProf.getEmail()) && userProf.getUser_role() != UserRole.ADMIN){
+        boolean isOwner = existing.getOwner().getEmail().equals(owner.getEmail());
+        boolean isAdmin = owner.getUser_role() == UserRole.ADMIN;
+        if(!isOwner && !isAdmin){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to make this action.");
         }
         listingService.deleteRequest(id);
@@ -112,10 +111,8 @@ public class ListingController {
     @GetMapping("/{id}/replies")
     public List<ListingDtos.ResponseToReplyDto> getReplies(@PathVariable Long id){
         //fetch the parent Request(which loads its replies)
-        Request r = listingService.findById(id);
+        return listingService.getAllRepliesToRequest(id);
 
-        //map each reply ->toDto
-        return r.getReplies().stream().map(listingService::toDto).toList();
     }
 
     /*
@@ -123,8 +120,8 @@ public class ListingController {
     * POST /api/requests/{id}/replies
     * */
     @PostMapping("/{id}/replies")
-    public ListingDtos.ResponseToReplyDto addReply(@PathVariable Long id, @RequestBody @Valid ListingDtos.CreateReplyDto dto, Principal principal){
-        Request request = listingService.findById(id);
+    public ListingDtos.ResponseToReplyDto addReply(@PathVariable @RequestBody @Valid Long id, ListingDtos.CreateReplyDto dto, Principal principal){
+
 
         //identify the calling user
         UserProfile replier = userProfService.findByEmail(principal.getName());
@@ -132,12 +129,14 @@ public class ListingController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account is not yet verified");
         }
 
+        //find the request
+        Request request = listingService.findRequestById(id);
         //map Dto to Reply entity (sets parent Request internally)
-        Reply toSave = listingService.fromDto(id, dto, replier);
+        Reply reply = listingService.fromReplyDto(request, dto, replier);
         //save to db
-        Reply saved = listingService.saveReply(toSave);
+        Reply saved = listingService.saveReply(reply);
         //Map entity to Dto and return
-        return listingService.toDto(saved);
+        return listingService.toReplyDto(saved);
     }
 
     /**
@@ -151,8 +150,16 @@ public class ListingController {
     @GetMapping("/search/title")
     public List<ListingDtos.ResponseToRequestDto> searchByTitle(@RequestParam("title") String title){
         //fetch matching entities
-        List<Request> matches = listingService.requestByTitle(title);
-        return matches.stream().map(listingService::toDto).toList();
+
+        return listingService.findRequestByTitle(title);
+    }
+
+    //find all replies by a user
+    @GetMapping("/replies/user")
+    public List<ListingDtos.ResponseToReplyDto> getAllRepliesForUser( Principal principal){
+        String email = principal.getName();
+
+        return listingService.getAllUserReplies(email);
     }
 
 }

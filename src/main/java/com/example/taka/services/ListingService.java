@@ -133,7 +133,7 @@ public class ListingService {
                 .build();
     }
 
-    /**
+    /*
      * Convert a Reply entity into a Response Dto
      * */
     public ListingDtos.ResponseToReplyDto toReplyDto(Reply r){

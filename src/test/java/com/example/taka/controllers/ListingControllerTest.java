@@ -4,18 +4,20 @@ import com.example.taka.dto.ListingDtos.CreateRequestDto;
 import com.example.taka.dto.ListingDtos.ResponseToRequestDto;
 import com.example.taka.models.Request;
 import com.example.taka.models.RequestStatus;
+import com.example.taka.models.UserProfile;
 import com.example.taka.repos.ReplyRepository;
 import com.example.taka.services.ListingService;
+import com.example.taka.services.UserProfileService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -35,27 +37,45 @@ class ListingControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private ListingService listingService;   // mock the service layer
 
-    @MockBean
+    @MockitoBean
     private ReplyRepository replyRepository; // mock the reply repository
 
+    @MockitoBean
+    private UserProfileService userProfileService;
+
+    //autowired objectMapper to convert java objects to/from json. Serialization
     @Autowired
     private ObjectMapper objectMapper;
 
+    //to test POST api/requests when a request DTO is sent. Expects 201 status
     @Test
     void whenPostValidRequest_thenReturns201AndCorrectJson() throws Exception {
         // Arrange: create a DTO that client would send
         CreateRequestDto dto = new CreateRequestDto(
                 "New Bike",
                 "Almost new bike",
-                "Alice",
                 "http://img.png",
-                new BigDecimal("100.00"),
-                "Vehicles",
+                new BigDecimal("60.0"),
+                "Autos",
                 "Ottawa"
+
         );
+
+        //email for owner
+        String email ="owner@email.com";
+
+        //create owner object
+        UserProfile owner = new UserProfile();
+        owner.setEmail(email);
+
+        //configure userProfileService mock to return the owner userProfile
+        when(userProfileService.findByEmail(email)).thenReturn(owner);
+
+        //stub service mapping &save
+        //a request object to simulate
 
         // Prepare a dummy Request entity that the service will return
         Request savedEntity = Request.builder()
