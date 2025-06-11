@@ -28,7 +28,7 @@ public class ListingService {
 
     // -------------------Mapping DTO -> Entity ------------------------------------
     //convert CreateRequestDto -> Request entity & set owner
-    public Request fromRequestDto(ListingDtos.CreateRequestDto dto, UserProfile owner){
+    public Request fromRequestToDto(ListingDtos.CreateRequestDto dto, UserProfile owner){
         return Request.builder()
                 .title(dto.title())
                 .description(dto.description())
@@ -120,7 +120,7 @@ public class ListingService {
     /** Convert a CreateReplyDto (validated at the controller boundary) into a reply entity
      * Fetching the parent Request first so I can set the relationship
      * */
-    public Reply fromReplyDto(Request parentRequest, ListingDtos.CreateReplyDto dto, UserProfile replier){
+    public Reply fromReplyToDto(Request parentRequest, ListingDtos.CreateReplyDto dto, UserProfile replier){
         return Reply.builder()
                 .message(dto.message())
                 .imageUrl(dto.imageUrl())

@@ -56,7 +56,7 @@ public class ListingController {
         UserProfile owner = userProfService.findByEmail(principal.getName());
 
         //convert Dto -> Entity
-        Request request = listingService.fromRequestDto(dto, owner);
+        Request request = listingService.fromRequestToDto(dto, owner);
 
         //save entity
         Request saved = listingService.saveRequest(request);
@@ -132,7 +132,7 @@ public class ListingController {
         //find the request
         Request request = listingService.findRequestById(id);
         //map Dto to Reply entity (sets parent Request internally)
-        Reply reply = listingService.fromReplyDto(request, dto, replier);
+        Reply reply = listingService.fromReplyToDto(request, dto, replier);
         //save to db
         Reply saved = listingService.saveReply(reply);
         //Map entity to Dto and return

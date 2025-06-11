@@ -13,14 +13,11 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class ListingServiceTest {
@@ -54,7 +51,7 @@ public class ListingServiceTest {
         UserProfile owner = new UserProfile();
         owner.setEmail("black@black.com");
 
-        Request entity = listingService.fromRequestDto(dto, owner);
+        Request entity = listingService.fromRequestToDto(dto, owner);
 
         assertThat(entity.getTitle()).isEqualTo("My Title");
         assertThat(entity.getDescription()).isEqualTo("My Description");
