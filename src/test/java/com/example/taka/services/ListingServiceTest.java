@@ -4,6 +4,7 @@ import com.example.taka.dto.ListingDtos;
 import com.example.taka.models.Request;
 import com.example.taka.models.RequestStatus;
 import com.example.taka.models.UserProfile;
+import com.example.taka.repos.ReplyRepository;
 import com.example.taka.repos.RequestRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,9 +23,17 @@ import static org.mockito.Mockito.*;
 
 public class ListingServiceTest {
 
+    // ——— Mock out ALL of ListingService’s dependencies —————————————
     @Mock
     private RequestRepository requestRepo;
 
+    @Mock
+    private ReplyRepository replyRepo;
+
+    @Mock
+    private UserProfileService userService;
+
+    // ——— Create an instance of ListingService with those mocks injected ——
     @InjectMocks
     private ListingService listingService;
 
@@ -35,7 +44,7 @@ public class ListingServiceTest {
 
     //This method is expected to convert the DTO into a Request entity.
     @Test
-    void whenFromDto_thenEntityHasMatchingFields(){
+    void whenFromRequestDto_thenEntityHasMatchingFields(){
         // 1. Arrange: build a sample CreateRequestDto
         ListingDtos.CreateRequestDto dto = new ListingDtos.CreateRequestDto(
                 "My Title",
@@ -51,6 +60,7 @@ public class ListingServiceTest {
         UserProfile owner = new UserProfile();
         owner.setEmail("black@black.com");
 
+        // — ACT — calling the service’s mapping method
         Request entity = listingService.fromRequestToDto(dto, owner);
 
         assertThat(entity.getTitle()).isEqualTo("My Title");
@@ -60,9 +70,12 @@ public class ListingServiceTest {
         assertThat(entity.getOfferPrice()).isEqualTo(new BigDecimal("50.0"));
         assertThat(entity.getCategory()).isEqualTo("Electronics");
         assertThat(entity.getLocation()).isEqualTo("Toronto");
+
+        assertThat(entity.getOwner()).isSameAs(owner);
+
         assertThat(entity.getStatus()).isEqualTo(RequestStatus.OPEN);
         assertThat(entity.getCreatedAt()).isNotNull();
-        // Note: updatedAt is set to now in the entity’s field initializer
+        // updatedAt is set to now in the entity’s field initializer
 
     }
 
@@ -76,10 +89,15 @@ public class ListingServiceTest {
         //a Pageable object for pagination and sorting.
         Pageable pageable = PageRequest.of(0,5, Sort.by("createdAt").descending());
 
+        // Create a fully-populated Request so toRequestDto() won't NPE
+        UserProfile owner = new UserProfile();
+        owner.setEmail("owner@example.com");
+
         // Create a sample Request object to be returned by the mock repository.
         Request sample = new Request();
         sample.setId(1L);
         sample.setTitle("T1");
+        sample.setOwner(owner);
 
         //simulate the page data returned by the repository.
         Page<Request> dummyPage = new PageImpl<>(List.of(sample), pageable, 1);
