@@ -60,7 +60,7 @@ public class UserProfileService {
 
     // -------------Mapping DTO -> Entity ---------------------------------------
 
-    //converting theDto to a UserProfile entity
+    //converting from Dto to entity
     public UserProfile fromDto(UserProfileDtos.CreateUserProfileDto dto){
         return UserProfile.builder()
                 .fName(dto.fName())
