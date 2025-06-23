@@ -54,6 +54,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
                         // Allows unauthenticated access to GET requests for "/api/requests/**" (e.g., fetching public requests).
                         .requestMatchers(HttpMethod.GET, "/api/requests/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/**").hasAuthority("ADMIN")
                         // Requires authentication for any other request not explicitly permitted above.
                         .anyRequest().authenticated()
                 )

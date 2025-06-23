@@ -48,7 +48,7 @@ public class AuthController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@Valid @RequestBody AuthDto.AuthRequest request){
+    public ResponseEntity<String> register(@Valid @RequestBody AuthDto.RegisterRequest request){
 
 
         //check if user already exists
@@ -58,9 +58,10 @@ public class AuthController {
 
         //create a new userProfile
         UserProfile newUser = UserProfile.builder()
-                .fName("default")
-                .lName("default")
+                .firstName(request.firstName().trim())
+                .lastName(request.lastName().trim())
                 .email(request.email().trim().toLowerCase())
+                .passwordHarsh(passwordEncoder.encode(request.password()))
                 .user_role(UserRole.USER)
                 .enabled(false)
                 .build();

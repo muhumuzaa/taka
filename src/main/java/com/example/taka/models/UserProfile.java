@@ -25,11 +25,11 @@ public class UserProfile {
 
     @NotBlank
     @Size(min = 2, max = 50)
-    private String fName;
+    private String firstName;
 
     @NotBlank
     @Size(min = 2, max = 50)
-    private String lName;
+    private String lastName;
 
     @NotBlank
     @Size(min = 2, max = 100)

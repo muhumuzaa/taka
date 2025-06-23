@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface UserProfileRepository extends JpaRepository<UserProfile, Long> {
 
-    List<UserProfile> findByFNameContainingIgnoreCaseOrLNameContainingIgnoreCase(String fName, String lName);
+    List<UserProfile> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(String fName, String lName);
 
     Optional<UserProfile> findByEmail(String email);
 

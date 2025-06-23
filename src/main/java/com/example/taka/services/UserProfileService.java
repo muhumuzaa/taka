@@ -32,7 +32,7 @@ public class UserProfileService {
     }
 
     public List<UserProfile> finderByfNameOrlName(String fName, String lName){
-        return userProfileRepo.findByFNameContainingIgnoreCaseOrLNameContainingIgnoreCase(fName, lName);
+        return userProfileRepo.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(fName, lName);
     }
 
     public UserProfile createUser(UserProfile user ){
@@ -41,8 +41,8 @@ public class UserProfileService {
 
     public UserProfile update(Long id, UserProfile updatedProf){
         UserProfile existing = findById(id);
-        existing.setFName(updatedProf.getFName());
-        existing.setLName(updatedProf.getLName());
+        existing.setFirstName(updatedProf.getFirstName());
+        existing.setLastName(updatedProf.getLastName());
         existing.setBio(updatedProf.getBio());
         existing.setProfileImage(updatedProf.getProfileImage());
         existing.setPhoneNumber(updatedProf.getPhoneNumber());
@@ -63,8 +63,8 @@ public class UserProfileService {
     //converting from Dto to entity
     public UserProfile fromDto(UserProfileDtos.CreateUserProfileDto dto){
         return UserProfile.builder()
-                .fName(dto.fName())
-                .lName(dto.lName())
+                .firstName(dto.fName())
+                .lastName(dto.lName())
                 .email(dto.email())
                 .passwordHarsh(passwordEncoder.encode(dto.password()))
                 .bio(dto.bio())
@@ -82,8 +82,8 @@ public class UserProfileService {
     public UserProfileDtos.UserProfileResponseDto toDto(UserProfile user) {
         return new UserProfileDtos.UserProfileResponseDto(
                 user.getId(),
-                user.getFName(),
-                user.getLName(),
+                user.getFirstName(),
+                user.getLastName(),
                 user.getEmail(),
                 user.getBio(),
                 user.getProfileImage(),

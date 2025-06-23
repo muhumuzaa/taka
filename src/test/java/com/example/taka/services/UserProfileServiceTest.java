@@ -35,7 +35,7 @@ class UserProfileServiceTest {
         var outDto = userProfService.toDto(entity);
 
         //Assert
-        assertEquals("Alice", entity.getFName());
+        assertEquals("Alice", entity.getFirstName());
         assertEquals("hashed", entity.getPasswordHarsh());
         assertEquals(entity.getEmail(), outDto.email());
         assertFalse(outDto.enabled());

@@ -33,7 +33,7 @@ public class UserProfileController {
         return userProfService.toDto(userProf);
     }
 
-    //create user
+    /*create user
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserProfileDtos.UserProfileResponseDto createUser(@Valid @RequestBody UserProfileDtos.CreateUserProfileDto dto){
@@ -47,6 +47,7 @@ public class UserProfileController {
         //convert entity back to dto and return to client
         return userProfService.toDto(savedEntity);
     }
+    */
 
     @PutMapping("/{id}")
     public UserProfileDtos.UserProfileResponseDto updateUser(@PathVariable @RequestBody Long id, UserProfileDtos.CreateUserProfileDto dto){
