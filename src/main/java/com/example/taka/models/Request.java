@@ -55,6 +55,8 @@ public class Request {
     private RequestStatus status = RequestStatus.OPEN;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(nullable=false)
     private ContentStatus contentStatus = ContentStatus.ALLOWED;
 
     @Builder.Default

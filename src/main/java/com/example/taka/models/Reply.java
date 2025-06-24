@@ -41,6 +41,8 @@ public class Reply {
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(nullable=false)
     private ContentStatus contentStatus = ContentStatus.ALLOWED;
 
     @ManyToOne(fetch=FetchType.LAZY)

@@ -11,6 +11,7 @@ import com.example.taka.services.ListingService;
 import com.example.taka.services.UserProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/requests")
@@ -29,10 +31,12 @@ public class ListingController {
     private final ReplyRepository replyRepo;
     private final UserProfileService userProfService;
 
+    //for skipping user verification in development- But is active in production
+    @Value("${app.security.skip-user-verification}")
+    private boolean skipUserVerification;
 
-   /**
-    * FOR REQUESTS
-    * */
+
+    // ─────────────── REQUESTS ──────────────────────────────────────────────────────────────────────────────────────────
 
     /* 1. Get /api/requests ->  Get all buy requests with pagination and sorting*/
     @GetMapping
@@ -54,6 +58,7 @@ public class ListingController {
 
         //first look up authenticated user
         UserProfile owner = userProfService.findByEmail(principal.getName());
+         isUserVerified(owner);
 
         //convert Dto -> Entity
         Request request = listingService.fromRequestToDto(dto, owner);
@@ -72,10 +77,11 @@ public class ListingController {
         Request existing = listingService.findRequestById(id);
 
         UserProfile owner = userProfService.findByEmail(principal.getName());
+        isUserVerified(owner);
 
         //Only owner can update
         if(!existing.getOwner().getEmail().equals(owner.getEmail())){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorize to make this update");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not the owner of this Request. You cant update it");
         }
 
         //save entity
@@ -92,6 +98,8 @@ public class ListingController {
 
         UserProfile owner = userProfService.findByEmail(principal.getName());
 
+        isUserVerified(owner);
+
         boolean isOwner = existing.getOwner().getEmail().equals(owner.getEmail());
         boolean isAdmin = owner.getUser_role() == UserRole.ADMIN;
         if(!isOwner && !isAdmin){
@@ -101,9 +109,9 @@ public class ListingController {
     }
 
 
-    /**
-     * FOR REPLIES
-     * */
+
+     // ─────────────── REPLIES ──────────────────────────────────────────────────────────────────────────────────────────
+
     /*
     * 1. Get replies for a particular request
     * GET /api/requests/{id}/replies
@@ -125,9 +133,7 @@ public class ListingController {
 
         //identify the calling user
         UserProfile replier = userProfService.findByEmail(principal.getName());
-        if(!replier.isEnabled()){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account is not yet verified");
-        }
+        isUserVerified(replier);
 
         //find the request
         Request request = listingService.findRequestById(id);
@@ -137,6 +143,47 @@ public class ListingController {
         Reply saved = listingService.saveReply(reply);
         //Map entity to Dto and return
         return listingService.toReplyDto(saved);
+    }
+
+    @PutMapping("/{id}/replies")
+    public ListingDtos.ResponseToReplyDto updateReply(
+            @PathVariable Long requestId,
+            @PathVariable Long replyId,
+            @Valid @RequestBody ListingDtos.CreateReplyDto dto,
+            Principal principal)
+
+    {
+        UserProfile replier = userProfService.findByEmail(principal.getName());
+        isUserVerified(replier);
+
+        //check if request exists
+        listingService.findRequestById(requestId);
+
+
+        Reply updated = listingService.updateReply(replyId, dto, replier.getEmail());
+
+        return listingService.toReplyDto(updated);
+
+    }
+
+    @DeleteMapping("/{requestId}/replies/{replyId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteReply(
+            @PathVariable Long requestId,
+            @PathVariable Long replyId,
+            Principal principal
+    ) {
+        // 1) ensure the parent request exists
+        listingService.findRequestById(requestId);
+
+        // 2) load & (optionally) verify the replier
+        UserProfile replier = userProfService.findByEmail(principal.getName());
+
+        //ensure parent request exists
+        listingService.findRequestById(requestId);
+
+        // 3) delegate to your service (which checks “only owner can delete”)
+        listingService.deleteReply(replyId, replier.getEmail());
     }
 
     /**
@@ -162,4 +209,15 @@ public class ListingController {
         return listingService.getAllUserReplies(email);
     }
 
+
+    /**
+     * Shared Helper
+     * */
+
+    private void isUserVerified(UserProfile user){
+        if(!skipUserVerification && !user.isEnabled()){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Your account has not yet been verified");
+        }
+    }
 }
