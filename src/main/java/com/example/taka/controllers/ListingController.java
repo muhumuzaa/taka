@@ -2,6 +2,7 @@ package com.example.taka.controllers;
 
 
 import com.example.taka.dto.ListingDtos;
+import lombok.extern.slf4j.Slf4j;
 import com.example.taka.models.Request;
 import com.example.taka.models.Reply;
 import com.example.taka.models.UserProfile;
@@ -9,6 +10,7 @@ import com.example.taka.models.UserRole;
 import com.example.taka.repos.ReplyRepository;
 import com.example.taka.services.ListingService;
 import com.example.taka.services.UserProfileService;
+import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,11 +22,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 import java.util.List;
-import java.util.Optional;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/requests")
 @RequiredArgsConstructor
+@Slf4j
 public class ListingController {
 
     private final ListingService listingService;
@@ -32,8 +36,14 @@ public class ListingController {
     private final UserProfileService userProfService;
 
     //for skipping user verification in development- But is active in production
-    @Value("${app.security.skip-user-verification}")
+    @Value("${app.security.skip-user-verification:false}")
     private boolean skipUserVerification;
+
+
+    @PostConstruct
+    public void logSkipFlag() {
+        log.info("skip-user-verification = {}", skipUserVerification);
+    }
 
 
     // ─────────────── REQUESTS ──────────────────────────────────────────────────────────────────────────────────────────
@@ -108,7 +118,30 @@ public class ListingController {
         listingService.deleteRequest(id);
     }
 
+    /**
+     * 6. POST /api/requests/batch
+     *    Create multiple requests at once (ADMIN only)
+     */
+    @PostMapping("/batch")
+    @ResponseStatus(HttpStatus.CREATED)
+    //@PreAuthorize("hasAuthority('ADMIN')")
+    public List<ListingDtos.ResponseToRequestDto> createRequestsBatch(
+            @RequestBody @Valid List< ListingDtos.CreateRequestDto> dtos,
+            Principal principal
+    ) {
+        // look up the calling user (must be ADMIN, enforced by @PreAuthorize)
+        UserProfile admin = userProfService.findByEmail(principal.getName());
+        isUserVerified(admin);  // still check enabled if you want
 
+        // map, save and return each one
+        return dtos.stream()
+                .map(dto -> {
+                    Request r = listingService.fromRequestToDto(dto, admin);
+                    Request saved = listingService.saveRequest(r);
+                    return listingService.toRequestDto(saved);
+                })
+                .toList();
+    }
 
      // ─────────────── REPLIES ──────────────────────────────────────────────────────────────────────────────────────────
 
@@ -128,7 +161,10 @@ public class ListingController {
     * POST /api/requests/{id}/replies
     * */
     @PostMapping("/{id}/replies")
-    public ListingDtos.ResponseToReplyDto addReply(@PathVariable @RequestBody @Valid Long id, ListingDtos.CreateReplyDto dto, Principal principal){
+    public ListingDtos.ResponseToReplyDto addReply(
+            @PathVariable Long id,
+            @Valid @RequestBody ListingDtos.CreateReplyDto dto,
+            Principal principal){
 
 
         //identify the calling user
